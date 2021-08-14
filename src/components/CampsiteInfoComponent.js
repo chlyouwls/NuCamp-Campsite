@@ -6,6 +6,8 @@ import { LocalForm, Control, Errors } from 'react-redux-form';
 import 'font-awesome/css/font-awesome.min.css';
 import { Component } from 'react';
 import { Loading } from './LoadingComponent';
+import { baseUrl } from '../components/shared/baseUrl';
+import { FadeTransform, Fade, Stagger } from 'react-animation-components';
 
 const required = val => val && val.length;
 const maxLength = len => val => !val || (val.length <= len);
@@ -14,12 +16,18 @@ const minLength = len => val => val && (val.length >= len);
      function RenderCampsite({campsite}) {
         return(
             <div className="col-md-5 m-1">
-                 <Card>
-                    <CardImg top src={campsite.image} alt={campsite.name} />
-                    <CardBody>
-                        <CardText>{campsite.description}</CardText>
-                    </CardBody>
+                <FadeTransform
+                in
+                transformProps={{
+                    exitTransform: 'scale(0.5) translateY(-50%)'
+                }}>
+                <Card>
+                    <CardImg top src={baseUrl + campsite.image} alt={campsite.name} />
+                        <CardBody>
+                            <CardText>{campsite.description}</CardText>
+                        </CardBody>
                 </Card>
+                </FadeTransform>
             </div>
         );
     }
@@ -45,7 +53,7 @@ const minLength = len => val => val && (val.length >= len);
 
             handleSubmit(value) {
                 this.toggleModal(); 
-                this.props.addComment(this.props.campsiteId, value.rating, value.author, value.text);
+                this.props.postComment(this.props.campsiteId, value.rating, value.author, value.text);
             }
 
         render() {
@@ -120,23 +128,31 @@ const minLength = len => val => val && (val.length >= len);
     }
 
 
-    function RenderComments({comments, addComment, campsiteId, postComment}) {
+    function RenderComments({comments, campsiteId, postComment}) {
         if (comments) {
             return (
                 <div className="col-md-5 m-1"> 
                 <h4>Comments</h4>
-                {comments.map((comment, index ) => (
-                    <div key={index}>
-                    <p>{comment.text}</p>
-                    <span> -- {comment.author}, {new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: '2-digit'}).format(new Date(Date.parse(comment.date)))}</span>
-                    </div>
-                ))}
-                <CommentForm campsiteId={campsiteId} postComment={postComment} addComment={addComment} />
-                </div>
-            );
-        }
-        return <div />
+                <Stagger in>
+                    {comments.map(comment => {
+                        return (
+                            <Fade in key={comment.id}>
+                                <div>
+                                    <p>
+                                        {comment.text}<br />
+                                        -- {comment.author}, {new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: '2-digit'}).format(new Date(Date.parse(comment.date)))}
+                                    </p>
+                                </div>
+                            </Fade>
+                        );
+                    })}
+                </Stagger>
+                <CommentForm campsiteId={campsiteId} postComment={postComment} />
+            </div>
+        );
     }
+    return <div />
+}
 
    
 
@@ -176,7 +192,7 @@ const minLength = len => val => val && (val.length >= len);
                     </div>
                     <div className="row" >
                         <RenderCampsite campsite={props.campsite} />
-                        <RenderComments comments={props.comments} campsiteId={props.campsiteId} postComment={props.postComment} addComment={props.addComment} />
+                        <RenderComments comments={props.comments} campsiteId={props.campsiteId} postComment={props.postComment} />
                     </div>
                 </div>
             );
